@@ -1,0 +1,13 @@
+[
+    {
+        "key": "welcome",
+        "title": "Welcome!",
+        "title_fa": "خوش آمدید!",
+        "content": "htmls/welcome.html",
+        "content_fa": "htmls/welcome_fa.html",
+        "section": "general",
+        "description": "Main welcome message shown to users",
+        "isActive": true,
+        "shouldAccept": true
+      }
+]

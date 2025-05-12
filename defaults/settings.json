@@ -1,0 +1,122 @@
+[
+  {
+    "key": "update_available",
+    "value": "false",
+    "section": "update",
+    "platform": "Android",
+    "isPublic": true,
+    "description": "is there any update available for the app"
+  },
+  {
+    "key": "update_force",
+    "value": "false",
+    "section": "update",
+    "platform": "Android",
+    "isPublic": true,
+    "description": "the url of the update"
+  },
+  {
+    "key": "update_url",
+    "value": "https://www.google.com/update.apk",
+    "section": "update",
+    "platform": "Android",
+    "isPublic": true,
+    "description": "the url of the update"
+  },
+  {
+    "key": "update_version_code",
+    "value": "1",
+    "section": "update",
+    "isPublic": true,
+    "platform": "Android",
+    "description": "the version code of the update"
+  },
+  {
+    "key": "update_version",
+    "value": "1.0.0",
+    "section": "update",
+    "isPublic": true,
+    "platform": "Android",
+    "description": "the version of the update"
+  },
+  {
+    "key": "update_logo",
+    "value": "https://www.google.com/logo.png",
+    "section": "update",
+    "isPublic": true,
+    "platform": "Android",
+    "description": "the logo of the update"
+  },
+  {
+    "key": "update_title",
+    "value": "Update Available",
+    "section": "update",
+    "isPublic": true,
+    "platform": "Android",
+    "description": "the title of the update"
+  },
+  {
+    "key": "update_title_fa",
+    "value": "بروز رسانی موجود",
+    "section": "update",
+    "isPublic": true,
+    "platform": "Android",
+    "description": "the title of the update in persian"
+  },
+  {
+    "key": "update_message",
+    "value": "A new version of the app is available. Please update to the latest version.",
+    "section": "update",
+    "isPublic": true,
+    "platform": "Android",
+    "description": "the message of the update"
+  },
+  {
+    "key": "update_message_fa",
+    "value": "یک آپدیت جدید برای برنامه موجود است. لطفاً به نسخه جدیدترین را بروز رسانی کنید.",
+    "section": "update",
+    "isPublic": true,
+    "platform": "Android",
+    "description": "the message of the update in persian"
+  },
+  {
+    "key": "update_button_text",
+    "value": "Update",
+    "section": "update",
+    "isPublic": true,
+    "platform": "Android",
+    "description": "the text of the update button"
+  },
+  {
+    "key": "update_button_text_fa",
+    "value": "بروز رسانی",
+    "section": "update",
+    "isPublic": true,
+    "platform": "Android",
+    "description": "the text of the update button in persian"
+  },
+  {
+    "key": "maintenance_mode",
+    "value": "false",
+    "section": "maintenance",
+    "isPublic": true,
+    "platform": "All",
+    "description": "is the server under maintenance mode"
+  },
+  {
+    "key": "maintenance_message",
+    "value": "The server is under maintenance. Please try again later.",
+    "section": "maintenance",
+    "isPublic": true,
+    "platform": "All",
+    "description": "the message of the maintenance"
+  },
+  {
+    "key": "maintenance_message_fa",
+    "value": "سرور در حالت نگهداری است. لطفاً بعداً دوباره تلاش کنید.",
+    "section": "maintenance",
+    "isPublic": true,
+    "platform": "All",
+    "description": "the message of the maintenance in persian"
+  }
+]

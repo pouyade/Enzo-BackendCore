@@ -1,0 +1,20 @@
+[
+  {
+    "name": "Plan A",
+    "durationDays": 30,
+    "price": 100,
+    "isActive": true
+  },
+  {
+    "name": "Plan B",
+    "durationDays": 90,
+    "price": 200,
+    "isActive": true
+  },
+  {
+    "name": "Plan C",
+    "durationDays": 180,
+    "price": 300,
+    "isActive": true
+  }
+]

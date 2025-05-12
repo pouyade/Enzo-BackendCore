@@ -1,0 +1,8 @@
+node_modules
+python
+.git
+.gitignore
+Dockerfile
+docker-compose.yml
+test
+*.log

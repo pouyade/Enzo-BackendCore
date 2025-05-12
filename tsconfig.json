@@ -1,0 +1,45 @@
+{
+  "compilerOptions": {
+    /* Language and Environment */
+    "target": "es2018", /* JavaScript version for emitted code */
+    "lib": ["es2018", "esnext.asynciterable"], /* Included library declarations */
+    "experimentalDecorators": true, /* Support for legacy decorators */
+    "emitDecoratorMetadata": true, /* Emit metadata for decorators */
+
+    /* Modules */
+    "module": "commonjs", /* Generate CommonJS module code */
+    "moduleResolution": "node", /* Use Node.js module resolution */
+    "baseUrl": ".", /* Base directory for non-relative module names */
+    "paths": {
+      "@/*": ["./*"],
+      "@Helper/*": ["./Helper/*"],
+      "@models/*": ["./models/*"],
+      "@routes/*": ["./routes/*"],
+      "@middleware/*": ["./middleware/*"],
+      "@config/*": ["./config/*"]
+    }, /* Alias mappings for imports */
+    "resolveJsonModule": true, /* Allow importing .json files */
+    "allowSyntheticDefaultImports": true, /* Allow default imports from modules without default exports */
+    "esModuleInterop": true, /* Enable CommonJS interop */
+    "forceConsistentCasingInFileNames": true, /* Enforce consistent casing in imports */
+
+    /* Emit */
+    "outDir": "./dist", /* Output directory for compiled files */
+    "sourceMap": true, /* Generate source maps */
+    "removeComments": true, /* Remove comments in output */
+
+    /* Type Checking */
+    "strict": true, /* Enable all strict type-checking options */
+    "noImplicitAny": true, /* Disallow implicit 'any' types */
+    "strictNullChecks": true, /* Strict null/undefined checks */
+    "strictFunctionTypes": true, /* Strict function type checking */
+    "noImplicitThis": true, /* Disallow 'this' with implicit 'any' */
+    "noImplicitReturns": true, /* Require explicit returns in functions */
+    "noFallthroughCasesInSwitch": true, /* Prevent switch case fallthrough */
+    "noUnusedLocals": false, /* Allow unused local variables */
+    "noUnusedParameters": false, /* Allow unused parameters */
+    "skipLibCheck": true /* Skip type checking for .d.ts files */
+  },
+  "include": ["./**/*.ts"], /* Include all TypeScript files */
+  "exclude": ["node_modules"] /* Exclude node_modules */
+}
