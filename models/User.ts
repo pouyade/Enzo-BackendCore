@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import { Voucher } from './Voucher';
 import { VoucherHistory } from './VoucherHistory';
+import { generateSixDigitCode } from '@/Helper/AuthHelper';
 
 export interface IUser extends mongoose.Document {
     _id: mongoose.Types.ObjectId;
@@ -41,14 +42,24 @@ export interface IUser extends mongoose.Document {
       };
       features?: Record<string, string>;
     };
+    telegramId?: string;
+    telegramUsername?: string;
+    telegramVerified: boolean;
+    telegramVerificationCode?: string;
+    telegramVerificationCodeExpires?: number;
+    telegramVerificationAttempts: number;
     
     // Voucher-related methods
     applyVoucher(voucherCode: string): Promise<any>;
     getActiveVouchers(): Promise<any[]>;
     getVoucherHistory(): Promise<any[]>;
-  }
+
+    // Methods
+    generateTelegramVerificationCode(): Promise<string>;
+    verifyTelegramCode(code: string): Promise<boolean>;
+}
   
-  const UserSchema = new mongoose.Schema({
+const UserSchema = new mongoose.Schema({
     name: String,
     email: { type: String,  required: true },
     password: { type: String, required: true },
@@ -83,19 +94,44 @@ export interface IUser extends mongoose.Document {
         transactionId: String
       },
       features: { type: Map, of: String }
-    }
-  });
+    },
+    telegramId: { type: String, default: null },
+    telegramUsername: { type: String, default: null },
+    telegramVerified: { type: Boolean, default: false },
+    telegramVerificationCode: { type: String, default: null },
+    telegramVerificationCodeExpires: { type: Number, default: null },
+    telegramVerificationAttempts: { type: Number, default: 0 }
+}, {
+    toJSON: { virtuals: true,
+        transform: function(doc, ret) {
+            ret.id = ret._id;
+            delete ret.password;
+            delete ret.activationCode;
+            delete ret.activationCodeExpires;
+            delete ret.activationCodeAttempts;
+            delete ret.resetPasswordToken;
+            delete ret.resetPasswordExpires;
+            delete ret.regId;
+            delete ret.telegramVerificationCode;
+            delete ret.telegramVerificationCodeExpires;
+            delete ret.telegramVerificationAttempts;
+            delete ret._id;
+            delete ret.__v;
+            return ret;
+        }
+    },
+});
   
-  // Add middleware to check subscription status
-  UserSchema.pre('save', function(next) {
+// Add middleware to check subscription status
+UserSchema.pre('save', function(next) {
     if (this.subscription && this.subscription.endDate) {
       this.subscription.isActive = this.subscription.endDate > Date.now();
     }
     next();
-  });
+});
   
-  // Method to apply a voucher to the user
-  UserSchema.methods.applyVoucher = async function(voucherCode: string) {
+// Method to apply a voucher to the user
+UserSchema.methods.applyVoucher = async function(voucherCode: string) {
     // Find the voucher by code
     const voucher = await Voucher.findOne({ 
       code: voucherCode,
@@ -152,10 +188,10 @@ export interface IUser extends mongoose.Document {
       historyRecord,
       subscription: this.subscription
     };
-  };
+};
   
-  // Method to get user's active vouchers
-  UserSchema.methods.getActiveVouchers = async function() {
+// Method to get user's active vouchers
+UserSchema.methods.getActiveVouchers = async function() {
     return VoucherHistory.find({
       userId: this._id,
       status: 'active',
@@ -165,15 +201,55 @@ export interface IUser extends mongoose.Document {
     .populate('planId')
     .sort({ expiresAt: 1 })
     .exec();
-  };
+};
   
-  // Method to get user's voucher history
-  UserSchema.methods.getVoucherHistory = async function() {
+// Method to get user's voucher history
+UserSchema.methods.getVoucherHistory = async function() {
     return VoucherHistory.find({ userId: this._id })
       .populate('voucherId')
       .populate('planId')
       .sort({ appliedAt: -1 })
       .exec();
-  };
+};
+
+// Method to generate telegram verification code
+UserSchema.methods.generateTelegramVerificationCode = async function() {
+    this.telegramVerificationCode = generateSixDigitCode();
+    this.telegramVerificationCodeExpires = Date.now() + (15 * 60 * 1000); // 15 minutes
+    this.telegramVerificationAttempts = 0;
+    await this.save();
+    return this.telegramVerificationCode;
+};
+
+// Method to verify telegram code
+UserSchema.methods.verifyTelegramCode = async function(code: string) {
+    if (!this.telegramVerificationCode || 
+        !this.telegramVerificationCodeExpires || 
+        Date.now() > this.telegramVerificationCodeExpires) {
+        return false;
+    }
+
+    if (this.telegramVerificationAttempts >= 5) {
+        this.telegramVerificationCode = null;
+        this.telegramVerificationCodeExpires = null;
+        this.telegramVerificationAttempts = 0;
+        await this.save();
+        return false;
+    }
+
+    this.telegramVerificationAttempts += 1;
+
+    if (this.telegramVerificationCode === code) {
+        this.telegramVerified = true;
+        this.telegramVerificationCode = null;
+        this.telegramVerificationCodeExpires = null;
+        this.telegramVerificationAttempts = 0;
+        await this.save();
+        return true;
+    }
+
+    await this.save();
+    return false;
+};
   
-  export const User = mongoose.model<IUser>('User', UserSchema);
+export const User = mongoose.model<IUser>('User', UserSchema);

@@ -81,8 +81,8 @@ export const initializeAppTexts = async () => {
       const existingText = await AppText.findOne({ key: textData.key });
       if (!existingText) {
         const text = new AppText(textData);
-        text.content = getHtmlContent(textData.content);
-        text.content_fa = getHtmlContent(textData.content_fa);
+        text.content = getHtmlContent("./defaults/"+textData.content);
+        text.content_fa = getHtmlContent("./defaults/"+textData.content_fa);
         await text.save();
       }
     }

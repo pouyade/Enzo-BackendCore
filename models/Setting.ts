@@ -5,7 +5,7 @@ export interface ISetting extends mongoose.Document {
     key: string;
     value: string;
     section: string;
-    platform: Platform;  // Now Platform is defined
+    platform: string;  // Now Platform is defined
     isPublic: boolean;
     description?: string;
     minAppVersion?: string;
@@ -18,7 +18,7 @@ export interface ISetting extends mongoose.Document {
     key: { type: String, required: true, unique: true },
     value: { type: String },
     section: { type: String, required: true },
-    platform: { type: String, enum: Object.values(Platform), default: Platform.All },  // Add platform field
+    platform: { type: String, default: "all" },
     isPublic: { type: Boolean, default: true },
     description: String,
     minAppVersion: String,

@@ -66,6 +66,23 @@ interface AppConfig {
     enabled: boolean;
     bypassRateLimits: boolean;
   };
+  gmail:{
+    clientId: string;
+    clientSecret: string;
+    redirectUrl: string;
+    refreshToken: string;
+    user: string;
+  };
+  smtp:{
+    host: string;
+    port: number;
+    secure: boolean;
+    user: string;
+    password: string;
+    fromEmail: string;
+    fromName: string;
+  };
+
   loadConfig: () => void;
 }
 
@@ -133,7 +150,22 @@ export class Config implements AppConfig {
     enabled: false,
     bypassRateLimits: false
   };
-
+  private _gmail = {
+    clientId: '',
+    clientSecret: '',
+    redirectUrl: '',
+    refreshToken: '',
+    user: ''
+  };
+  private _smtp = {
+    host: '',
+    port: 0,
+    secure: false,
+    user: '',
+    password: '',
+    fromEmail: '',
+    fromName: ''
+  };
   private constructor() {}
 
   public static getInstance(): Config {
@@ -166,6 +198,21 @@ export class Config implements AppConfig {
     instance._mail.mailerSendApiKey = process.env.MAILERSEND_API_KEY || 'your_mailersend_api_key';
     instance._mail.fromEmail = process.env.EMAIL_FROM || 'info@yourdomain.com';
     instance._mail.fromName = process.env.EMAIL_FROM_NAME || 'Your App';
+    
+    instance._gmail.clientId = process.env.GMAIL_CLIENT_ID || '';
+    instance._gmail.clientSecret = process.env.GMAIL_CLIENT_SECRET || '';
+    instance._gmail.redirectUrl = process.env.GMAIL_REDIRECT_URL || '';
+    instance._gmail.refreshToken = process.env.GMAIL_REFRESH_TOKEN || '';
+    instance._gmail.user = process.env.GMAIL_USER || '';
+
+    instance._smtp.host = process.env.SMTP_HOST || '';
+    instance._smtp.port = parseInt(process.env.SMTP_PORT || '587');
+    instance._smtp.secure = process.env.SMTP_SECURE === 'true';
+    instance._smtp.user = process.env.SMTP_USER || '';
+    instance._smtp.password = process.env.SMTP_PASSWORD || '';
+    instance._smtp.fromEmail = process.env.SMTP_FROM_EMAIL || '';
+    instance._smtp.fromName = process.env.SMTP_FROM_NAME || '';
+    
     instance._firebase.projectId = process.env.FIREBASE_PROJECT_ID || '';
     instance._firebase.clientEmail = process.env.FIREBASE_CLIENT_EMAIL || '';
     instance._firebase.privateKey = process.env.FIREBASE_PRIVATE_KEY || '';
@@ -202,6 +249,8 @@ export class Config implements AppConfig {
   get google() { return this._google; }
   get register() { return this._register; }
   get debug() { return this._debug; }
+  get gmail() { return this._gmail; }
+  get smtp() { return this._smtp; }
 
   public loadConfig(): void {
     Config.loadConfig();

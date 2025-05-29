@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import { MailHelper } from '@/Helper/MailHelper';
 import { Config } from '@/config';
 import { ISession, Session } from '@/models/Session';
 import { IUser, User } from '@/models/User';
@@ -31,6 +30,7 @@ import { avatarUpload } from '@/middleware/upload';
 import { fileStorage } from '@/Helper/FileStorage';
 import { BlockList } from 'net';
 import { Block } from '@/models/Block';
+import LocalMailService from '@/Helper/LocalMailService';
 
 // Initialize Google OAuth client
 const googleClient = new OAuth2Client(
@@ -99,7 +99,7 @@ authRouter.post('/register',
       });
       await user.save();
 
-      await MailHelper.getInstance().sendVerificationEmail(email, name, activationCode);
+      await LocalMailService.getInstance().sendVerificationEmail(email, activationCode);
       return res.status(200).json({ message: 'Activation code sent to email', verify: true });
     } catch (error: any) {
       if (error.code === 11000) {
@@ -218,11 +218,170 @@ authRouter.post('/resend-verification',
       user.activationCodeAttempts = 0;
       await user.save();
 
-      await MailHelper.getInstance().sendVerificationEmail(email, user.name, activationCode);
+      await LocalMailService.getInstance().sendVerificationEmail(email, activationCode);
       return res.status(200).json({ message: 'New activation code sent to email', verify: true, 'msg_code': 'activation_code_sent' });
     } catch (error: any) {
       Logger.error('Resend verification failed', { email: req.body.email, error: error.message });
       return res.status(500).json({ message: 'Failed to resend verification code', 'msg_code': 'resend_verification_failed' });
+    }
+  }));
+authRouter.post('/login-with-telegram', 
+  auth.optional,
+  MyRequestHandler(async (req, res) => {
+    try {
+      const { telegramId, email } = req.body;
+      
+      if (!telegramId) {
+        return res.status(400).json({ message: 'Telegram ID is required', 'msg_code': 'telegram_id_required' });
+      }
+
+      if (!email) {
+        return res.status(400).json({ message: 'Email is required', 'msg_code': 'email_required' });
+      }
+
+      if (!validateEmail(email)) {
+        return res.status(400).json({ message: 'Invalid email format', 'msg_code': 'invalid_email' });
+      }
+
+      // Find user by email
+      const user = await User.findOne({ email, isDeleted: false });
+
+      if (!user) {
+        return res.status(404).json({ 
+          message: 'User not found', 
+          'msg_code': 'user_not_found' 
+        });
+      }
+
+      // Check if this telegram ID is already linked to a different account
+      const existingTelegramUser = await User.findOne({ 
+        telegramId, 
+        email: { $ne: email }, 
+        isDeleted: false 
+      });
+
+      if (existingTelegramUser) {
+        return res.status(400).json({ 
+          message: 'This Telegram account is already linked to a different email', 
+          'msg_code': 'telegram_linked_to_different_email' 
+        });
+      }
+
+      // If user exists but telegramId is different
+      if (user.telegramId && user.telegramId !== telegramId) {
+        return res.status(400).json({ 
+          message: 'Email is already linked to a different Telegram account', 
+          'msg_code': 'email_linked_to_different_telegram' 
+        });
+      }
+
+      // If already verified with this telegram ID, return token
+      if (user.telegramId === telegramId && user.telegramVerified) {
+        const sessionToken = generateToken(user._id.toString(), user.isAdmin);
+        return res.status(200).json({ 
+          message: 'Login successful', 
+          'msg_code': 'login_successful', 
+          token: sessionToken 
+        });
+      }
+
+      // Generate and send verification code
+      await user.generateTelegramVerificationCode();
+      await LocalMailService.getInstance().sendVerificationEmail(
+        email, 
+        user.telegramVerificationCode as string
+      );
+
+      // Update telegram ID (will be verified when code is entered)
+      user.telegramId = telegramId;
+      await user.save();
+        
+      return res.status(200).json({ 
+        message: 'Verification code sent to email', 
+        'msg_code': 'verification_code_sent',
+        verify: true 
+      });
+
+    } catch (error) {
+      Logger.error('Telegram login failed', { error });
+      return res.status(500).json({ 
+        message: 'Login failed', 
+        'msg_code': 'login_failed' 
+      });
+    }
+  }));
+
+// Add new endpoint for verifying telegram code
+authRouter.post('/verify-telegram', 
+  auth.optional,
+  MyRequestHandler(async (req, res) => {
+    try {
+      const { email, telegramId, verificationCode } = req.body;
+
+      if (!email || !telegramId || !verificationCode) {
+        return res.status(400).json({ 
+          message: 'Email, telegramId and verification code are required', 
+          'msg_code': 'missing_required_fields' 
+        });
+      }
+
+      const user = await User.findOne({ 
+        email, 
+        telegramId,
+        isDeleted: false 
+      });
+
+      if (!user) {
+        return res.status(404).json({ 
+          message: 'User not found', 
+          'msg_code': 'user_not_found' 
+        });
+      }
+
+      // Verify the code
+      if (!user.telegramVerificationCode || 
+          !user.telegramVerificationCodeExpires || 
+          user.telegramVerificationCodeExpires < Date.now() ||
+          user.telegramVerificationCode !== verificationCode) {
+        return res.status(400).json({ 
+          message: 'Invalid or expired verification code', 
+          'msg_code': 'invalid_verification_code' 
+        });
+      }
+
+      // Mark telegram as verified and clear verification code
+      user.telegramVerified = true;
+      user.telegramVerificationCode = undefined;
+      user.telegramVerificationCodeExpires = undefined;
+      await user.save();
+
+      // Generate session token
+      const sessionToken = generateToken(user._id.toString(), user.isAdmin);
+
+      // Send notification about new telegram link
+      await NotificationService.getInstance().createNotification(
+        user._id.toString(),
+        'Telegram Account Linked',
+        'Your Telegram account has been successfully linked to your WikiToefl account.',
+        { 
+          type: "update",
+          details: {
+            telegramId: telegramId
+          }
+        }
+      );
+
+      return res.status(200).json({ 
+        message: 'Telegram account verified successfully', 
+        'msg_code': 'telegram_verified',
+        token: sessionToken 
+      });
+    } catch (error) {
+      Logger.error('Telegram verification failed', { error });
+      return res.status(500).json({ 
+        message: 'Verification failed', 
+        'msg_code': 'verification_failed' 
+      });
     }
   }));
 
@@ -396,7 +555,7 @@ authRouter.post('/forget-password',
       user.resetPasswordExpires = Date.now() + 3600000;
       await user.save();
 
-      await MailHelper.getInstance().sendPasswordResetEmail(email, user.name, resetCode);
+      await LocalMailService.getInstance().sendPasswordResetEmail(email, user.name, resetCode);
       Logger.info('Password reset email sent', { email });
       return res.status(200).json({ message: 'Password reset code sent to email' ,'msg_code':'password_reset_code_sent'});
     } catch (error: any) {
